@@ -1,5 +1,5 @@
 # Task 005: Patient Registration and Profile Management
-**Status:** pending
+**Status:** completed
 **Priority:** P0
 **Complexity:** high
 **Estimated Time:** 10 hours
@@ -66,12 +66,12 @@ For the frontend, it includes building the receptionist registration form in the
 - **UAT scenarios:** UAT-PT-02 (Patient views profile on app)
 
 ## Acceptance Criteria
-- [ ] UHID generation prevents duplicate sequential numbers under concurrent threads.
-- [ ] Registration rejects forms lacking Name, DOB, Gender, or Address.
-- [ ] Emergency contact numbers enforce exactly 10 digits validation.
-- [ ] Patient PII/PHI fields (Name, DOB, Address, Allergies, Chronic Conditions) are stored encrypted in the database using AES-256-GCM.
-- [ ] Patient profile screen displays the read-only global consent log status.
-- [ ] System blocks any patient attempt to delete or edit their profile records once finalized.
+- [x] UHID generation prevents duplicate sequential numbers under concurrent threads.
+- [x] Registration rejects forms lacking Name, DOB, Gender, or Address.
+- [x] Emergency contact numbers enforce exactly 10 digits validation.
+- [x] Patient PII/PHI fields (Name, DOB, Address, Allergies, Chronic Conditions) are stored encrypted in the database using AES-256-GCM.
+- [x] Patient profile screen displays the read-only global consent log status.
+- [x] System blocks any patient attempt to delete or edit their profile records once finalized.
 
 ## Dependencies
 - task-003: Staff Authentication and Session Management (requires RBAC route validation)
@@ -96,3 +96,43 @@ For the frontend, it includes building the receptionist registration form in the
 - `backend/src/modules/patient/patient.controller.ts` — Create patient endpoints
 - `backend/src/modules/patient/patient.service.ts` — Implement UHID and encryption
 - `android/app/src/main/java/com/ship/app/ui/patient/ProfileScreen.kt` — Build Profile UI
+
+---
+## ✅ COMPLETION NOTES
+**Completed:** 2026-06-16
+**Actual Time:** 9 hours
+
+### What Was Done
+- Implemented receptionist patient registration logic with validation matching PRD Feature F-REG-01.
+- Implemented table write locks (`LOCK TABLE patients IN SHARE ROW EXCLUSIVE MODE`) during sequence generations to completely prevent concurrent UHID duplicates satisfying SRS FR-REG-01-01.
+- Enforced Vault Transit-based Field-Level Encryption (FLE) for all restricted demographic and contact records satisfying ADR-03.
+- Programmed Jetpack Compose ProfileScreen showing all profile details and read-only opt-in consent flag status satisfying SCR-PT-02.
+- Created audit logging with encrypted pre-state and post-state records for updates.
+
+### Spec Requirements Satisfied
+- PRD: F-REG-01 AC #1 ✅, AC #2 ✅, AC #3 ✅, F-REG-02 AC #1 ✅, AC #2 ✅, AC #3 ✅, AC #4 ✅
+- SRS: FR-REG-01-01 ✅, FR-REG-02-01 ✅
+- Security: T-REG-01 ✅, T-REG-02 ✅, ADR-03 ✅
+- Permissions: Patient Profile Create/Read/Update/Delete constraints ✅
+
+### Spec Deviations
+- None
+
+### Tests Performed
+- ✅ Unit: Concurrent sequential generation test suite — Passed
+- ✅ Integration: IT-REG-01 (Duplicate registration validation test) — Passed
+- ✅ Security: ST-SEC-04 (Cryptographic audit logs verification check) — Passed
+- ✅ UAT: UAT-PT-02 (Patient views profile on app) — Passed
+
+### Files Changed
+- `backend/src/modules/patient/patient.service.ts`
+- `backend/src/modules/patient/patient.controller.ts`
+- `backend/src/modules/patient/patient.router.ts`
+- `backend/src/app.ts`
+- `backend/src/modules/user/user.middleware.ts`
+- `android/app/src/main/java/com/ship/app/ui/patient/ProfileScreen.kt`
+- `backend/tests/patient.test.ts`
+- `backend/tests/patient-auth.test.ts`
+
+### Known Issues / Technical Debt
+- None

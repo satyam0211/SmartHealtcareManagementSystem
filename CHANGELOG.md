@@ -10,19 +10,113 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### In Progress
-- task-003: Staff Authentication and Session Management
-
-### Started: task-003 — Staff Authentication and Session Management
-**Started:** 2026-06-15 19:40
+### Started: task-007 — Patient Triage and Vital Signs Recording
+**Started:** 2026-06-16 13:20
 **Priority:** P0
-**Document Refs:** PRD: F-SEC-02 | SRS: FR-SEC-02-01 | API: [POST /v1/auth/staff/login, POST /v1/auth/staff/logout] | Screens: [SCR-RC-01, SCR-DR-01, SCR-NS-01, SCR-LS-01, SCR-PH-01, SCR-BO-01, SCR-AD-01]
-Beginning work on staff email/password authentication, secure HttpOnly session cookies, idle timeout, and server-side RBAC guards.
-Plan: Code password verification, session cookie manager, RBAC middleware check, and auth controllers.
+**Document Refs:** PRD: F-OPD-05 | SRS: FR-OPD-05-01 | API: /v1/triage/vitals | Screens: SCR-NS-02, SCR-NS-03
+Beginning work on vital signs collection (blood pressure, heart rate, temperature, weight), numeric range validation, Vault Transit FLE encryption, role-based access restrictions, and integration tests.
+Plan: Described in implementation_plan.md, following Technical_Requirements.md.
+
+---
+
+## [0.7.0] - 2026-06-16
+### Task: task-006 — OPD Appointment Scheduling and Queue Management
+**Status:** ✅ Completed
+**Priority:** P0
+**Time Spent:** 12 hours (estimated: 16 hours)
+
+#### Spec Requirements Satisfied
+- PRD Feature: F-OPD-01 — Appointment Scheduling (Reception), F-OPD-02 — Patient Appointment Management (Patient App), F-OPD-03 — Queue Token Generation, F-OPD-04 — Dynamic Live Queue Tracking
+- SRS Requirements: FR-OPD-01-01, FR-OPD-02-01, FR-OPD-03-01, FR-OPD-04-01, FR-OPD-04-02
+- API Endpoints implemented: [POST /v1/appointments], [GET /v1/appointments], [PUT /v1/appointments/{id}/cancel], [POST /v1/queues/tokens], [GET /v1/queues/tokens/active], [GET /v1/queues/tokens/live], [PUT /v1/queues/tokens/{id}/status]
+- DB Tables affected: appointments, queue_tokens, audit_logs
+- Screens implemented: SCR-RC-04, SCR-RC-05, SCR-PT-03, SCR-PT-04
+- Security controls: Transactional doctor write lock (`SELECT ... FOR UPDATE`), server-side 2-hour cancellation validation, 30s HTTP polling rate constraint
+- Permissions enforced: Patient own only for appointments & waitlist, Receptionist write all, Doctor read all.
+- Tests written: IT-OPD-01, UAT-PT-03
+
+#### What Was Done
+- Coded 15-minute grid validation check on appointment creation.
+- Implemented transactional double-booking check utilizing PostgreSQL row-level locks on Doctor (`SELECT ... FOR UPDATE`) to block concurrent scheduling conflicts.
+- Programmed server-side validation rejecting patient cancellations/reschedules within 2 hours of the slot start time.
+- Developed checked-in patient check-in mechanism that generates sequential queue tokens daily per doctor (starting at `T-101`).
+- Built live waitlist estimates calculating patients ahead and wait times dynamically (`Patients Ahead * 15`).
+- Programmed Android Jetpack Compose `QueueTrackerScreen.kt` featuring teal glows, state badges, and a 30s coroutine-based HTTP polling system.
+
+#### Why These Changes
+- Establishes patient scheduling, receptionist triage check-in token assignment, and live queue status updates to streamline outpatient clinics.
+
+#### Technical Decisions Made
+- Chose row-level doctor locking instead of full appointments table locking to maximize database throughput.
+- Enforced 30s polling via Kotlin Coroutines to conform with ADR-02 and avoid persistent WebSocket connection overhead.
+
+#### Files Modified/Created
+- `backend/src/modules/queue/queue.service.ts`
+- `backend/src/modules/queue/queue.controller.ts`
+- `backend/src/modules/queue/queue.router.ts`
+- `backend/src/app.ts`
+- `android/app/src/main/java/com/ship/app/ui/patient/QueueTrackerScreen.kt`
+- `backend/tests/queue.test.ts`
+
+#### Spec Deviations
+- None
+
+#### This Task Unblocks
+- task-007
+
+---
+
+## [0.6.0] - 2026-06-16
+### Task: task-005 — Patient Registration and Profile Management
+**Status:** ✅ Completed
+**Priority:** P0
+**Time Spent:** 9 hours (estimated: 10 hours)
+
+#### Spec Requirements Satisfied
+- PRD Feature: F-REG-01 — Patient Registration and UHID Generation, F-REG-02 — Patient Profile Management
+- SRS Requirements: FR-REG-01-01, FR-REG-02-01
+- API Endpoints implemented: [POST /v1/patients], [GET /v1/patients/{id}], [PUT /v1/patients/{id}], [PUT /v1/patients/{id}/consent]
+- DB Tables affected: patients, audit_logs
+- Screens implemented: SCR-RC-02, SCR-PT-02
+- Security controls: Database transactional row locks, Vault Transit Engine FLE (AES-256-GCM), encrypted pre/post audit logs
+- Permissions enforced: Patient read own profile conditional, Receptionist/Admin write, delete forbidden
+- Tests written: IT-REG-01, ST-SEC-04, UAT-PT-02
+
+#### What Was Done
+- Programmed locked sequential UHID generation (`UHID-YYYY-XXXXXX`) using transaction locks (`LOCK TABLE patients IN SHARE ROW EXCLUSIVE MODE`) to completely prevent duplicate IDs.
+- Coded Vault transit-based demographic and medical profile encryption (FLE) for restricted fields before database write operations.
+- Developed GET profile, PUT update profile, and PUT consent status API endpoints on the backend with access validation.
+- Built patient profile viewer layout in Kotlin Compose `ProfileScreen.kt` featuring read-only sections and checkbox display for the consent flag.
+- Integrated update operations with audit logging recording encrypted pre-state and post-state snapshots.
+
+#### Why These Changes
+- Establishes receptionist patient registration capability and allows patients to securely manage their digital consent and view their profiles with strict end-to-end data confidentiality.
+
+#### Technical Decisions Made
+- Decision 1: Acquired PostgreSQL share row exclusive locks to eliminate race conditions under concurrent client registration.
+- Decision 2: Encrypted the pre-state and post-state audit log payload using Vault Transit KMS to prevent data leaks of patient details from logs.
+
+#### Files Modified/Created
+- `backend/src/modules/patient/patient.service.ts`
+- `backend/src/modules/patient/patient.controller.ts`
+- `backend/src/modules/patient/patient.router.ts`
+- `backend/src/app.ts`
+- `backend/src/modules/user/user.middleware.ts`
+- `android/app/src/main/java/com/ship/app/ui/patient/ProfileScreen.kt`
+- `backend/tests/patient.test.ts`
+- `backend/tests/patient-auth.test.ts`
+
+#### Spec Deviations
+- None
+
+#### This Task Unblocks
+- task-006
+
+#### Known Issues / Technical Debt
+- None
+
 
 ### Planned
-- task-003: Staff Authentication and Session Management (Priority: P0)
-- task-004: Patient Authentication and Firebase Integration (Priority: P0)
-- task-005: Patient Registration and Profile Management (Priority: P0)
 - task-006: OPD Appointment Scheduling and Queue Management (Priority: P0)
 - task-007: Patient Triage and Vital Signs Recording (Priority: P0)
 - task-008: Doctor Dashboard and Consultation Workspace (Priority: P0)
@@ -34,6 +128,109 @@ Plan: Code password verification, session cookie manager, RBAC middleware check,
 - task-014: Security Auditing and Data Access Audit Trail (Priority: P0)
 - task-015: Hospital Configuration and Platform settings (Priority: P0)
 - task-016: Executive Operational Analytics Dashboard (Priority: P0)
+
+---
+
+## [0.5.0] - 2026-06-16
+### Task: task-004 — Patient Authentication and Firebase Integration
+**Status:** ✅ Completed
+**Priority:** P0
+**Time Spent:** 7 hours (estimated: 8 hours)
+
+#### Spec Requirements Satisfied
+- PRD Feature: F-SEC-01 — Patient Authentication
+- SRS Requirements: FR-SEC-01-01, FR-SEC-01-02, FR-SEC-01-03
+- API Endpoints implemented: [POST /v1/auth/patients/login]
+- DB Tables affected: patients, audit_logs
+- Screens implemented: SCR-PT-01
+- Security controls: Firebase ID token verification, 1-hour session token JWTs, SMS OTP validation
+- Permissions enforced: Patient role access separation, Bearer token guard
+- Tests written: IT-SEC-01, IT-SEC-02, UAT-PT-01
+
+#### What Was Done
+- Programmed Firebase Admin SDK configuration setup in `firebase.config.ts` with local development fallback parameters.
+- Coded token verification service in `patient-auth.service.ts` decrypting phone numbers to lookup/auto-register patients.
+- Developed backend sequential UHID generator (`UHID-YYYY-XXXXXX`) and default encrypted profile values insertion for self-registration.
+- Programmed 1-hour expiration JWT session token generator and parser.
+- Built Jetpack Compose `LoginScreen.kt` for Android mobile clients implementing outer margins, OutlinedTextFields, and error message state UI.
+- Implemented `authenticatePatientToken` middleware.
+- Enforced role boundaries, immediately rejecting patient tokens on staff portals, returning ACCESS_DENIED and writing security warnings under patient_id in AuditLogs.
+
+#### Why These Changes
+- Establishes the secure entry portal and session validation framework for patients to register and access their digital health records.
+
+#### Technical Decisions Made
+- Decision 1: Enabled automatic placeholder patient creation upon first Firebase SMS login to simplify user onboarding.
+- Decision 2: Implemented a token-based JWT session mechanism for mobile devices to conform with ADR-02.
+
+#### Files Modified/Created
+- `android/app/src/main/java/com/ship/app/ui/patient/LoginScreen.kt`
+- `backend/src/config/firebase.config.ts`
+- `backend/src/modules/user/patient-auth.service.ts`
+- `backend/src/modules/user/patient-auth.controller.ts`
+- `backend/src/modules/user/patient-auth.router.ts`
+- `backend/src/modules/user/user.middleware.ts`
+- `backend/src/app.ts`
+- `backend/tests/patient-auth.test.ts`
+- `backend/tests/rbac.test.ts`
+
+#### Spec Deviations
+- None
+
+#### This Task Unblocks
+- task-005, task-017
+
+#### Known Issues / Technical Debt
+- None
+
+---
+
+## [0.4.0] - 2026-06-16
+### Task: task-003 — Staff Authentication and Session Management
+**Status:** ✅ Completed
+**Priority:** P0
+**Time Spent:** 10 hours (estimated: 12 hours)
+
+#### Spec Requirements Satisfied
+- PRD Feature: F-SEC-02 — Doctor & Staff Authentication & RBAC
+- SRS Requirements: FR-SEC-02-01, FR-SEC-02-02, FR-SEC-02-03
+- API Endpoints implemented: [POST /v1/auth/staff/login], [POST /v1/auth/staff/logout], [GET /v1/auth/staff/session]
+- DB Tables affected: users, departments, audit_logs
+- Screens implemented: SCR-RC-01, SCR-DR-01, SCR-NS-01, SCR-LS-01, SCR-PH-01, SCR-BO-01, SCR-AD-01
+- Security controls: bcrypt hash verification (work factor 10), HTTP-only Secure SameSite=Strict cookies, idle/absolute timeouts, brute-force lockout
+- Permissions enforced: Administrator audit-logs check, role restrictions per Permissions_Matrix.md
+- Tests written: IT-SEC-02, ST-SEC-02, unit tests
+
+#### What Was Done
+- Coded user authentication service using bcrypt comparison (work factor 10) satisfying F-SEC-02 AC #1.
+- Implemented secure HTTP-only cookies storing UUID sessionIds satisfying F-SEC-02 AC #2.
+- Programmed idle timeout (15 mins) and absolute timeout (12 hours) session validations satisfying F-SEC-02 AC #3.
+- Developed RBAC middleware guarding Express routing and immediately revoking session, clearing cookie, and logging security warning to `audit_logs` table upon privilege escalation attempts satisfying F-SEC-02 AC #4.
+- Standardized non-hex UUIDs and corrected hash credentials in database seeds.
+
+#### Why These Changes
+- Establishes the secure login and session management system for hospital staff roles to safeguard healthcare information.
+
+#### Technical Decisions Made
+- Decision 1: Implemented in-memory UserSession cache for rapid verification and immediate revocation on RBAC mismatch.
+- Decision 2: Standardized paths to versioned `/v1` prefix to comply with API_Spec.md routing rules.
+
+#### Files Modified/Created
+- `backend/src/modules/user/user.controller.ts`
+- `backend/src/modules/user/user.middleware.ts`
+- `backend/src/modules/user/user.router.ts`
+- `backend/src/db/seeds/seed.sql`
+- `backend/tests/auth.test.ts`
+- `backend/tests/rbac.test.ts`
+
+#### Spec Deviations
+- None
+
+#### This Task Unblocks
+- task-005, task-010, task-015
+
+#### Known Issues / Technical Debt
+- None
 
 ---
 

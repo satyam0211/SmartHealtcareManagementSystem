@@ -1,4 +1,4 @@
-import { dbPool, dbQuery } from '../src/config/database';
+import { dbPool } from '../src/config/database';
 
 describe('IT-DB-01: Database Integrity Check', () => {
   beforeAll(async () => {

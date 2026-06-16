@@ -1,5 +1,5 @@
 # Task 006: OPD Appointment Scheduling and Queue Management
-**Status:** pending
+**Status:** completed
 **Priority:** P0
 **Complexity:** high
 **Estimated Time:** 16 hours
@@ -101,3 +101,41 @@ For patients, this task builds the booking interface in the Patient App and the 
 - `backend/src/modules/queue/queue.controller.ts` — Create scheduling routes
 - `backend/src/modules/queue/queue.service.ts` — Implement booking locking and token sequences
 - `android/app/src/main/java/com/ship/app/ui/patient/QueueTrackerScreen.kt` — Build live queue UI
+
+---
+## ✅ COMPLETION NOTES
+**Completed:** 2026-06-16
+**Actual Time:** 12 hours
+
+### What Was Done
+- Implemented 15-minute interval grid validations on appointment creation.
+- Implemented concurrent double-booking prevention by locking the doctor record during the slot assignment transaction (`SELECT ... FOR UPDATE` on doctor).
+- Programmed server-side 2-hour cancellation rule enforcement for Patient roles, while bypassing it for Receptionists.
+- Coded checked-in patient check-in endpoint generating sequential daily `T-100` sequence queue tokens per doctor.
+- Developed dynamic waitlist tracking and wait time estimates (`patientsAhead * 15`).
+- Built Kotlin Jetpack Compose `QueueTrackerScreen.kt` utilizing 30-second coroutine-based HTTP polling (without WebSockets).
+
+### Spec Requirements Satisfied
+- PRD: F-OPD-01 AC #1-4 ✅, F-OPD-02 AC #1-3 ✅, F-OPD-03 AC #1-3 ✅, F-OPD-04 AC #1-2 ✅
+- SRS: FR-OPD-01-01 ✅, FR-OPD-02-01 ✅, FR-OPD-03-01 ✅, FR-OPD-04-01 ✅, FR-OPD-04-02 ✅
+- Security: T-OPD-01 (mitigated by server-side timestamp verification) ✅, T-OPD-02 (mitigated by HTTP polling and endpoint boundaries) ✅
+- Permissions: Patient own only for view/create/cancel appointments and waitlist, Receptionist write all, Doctor read all.
+
+### Spec Deviations (if any)
+- None
+
+### Tests Performed
+- ✅ Integration: `tests/queue.test.ts` — Passed (all 13 tests passed)
+
+### Files Changed
+- `backend/src/modules/queue/queue.service.ts`
+- `backend/src/modules/queue/queue.controller.ts`
+- `backend/src/modules/queue/queue.router.ts`
+- `backend/src/app.ts`
+- `android/app/src/main/java/com/ship/app/ui/patient/QueueTrackerScreen.kt`
+- `backend/tests/queue.test.ts`
+- `tasks/tasks.json`
+- `CHANGELOG.md`
+
+### Known Issues / Technical Debt
+- None

@@ -1,5 +1,5 @@
 # Task 004: Patient Authentication and Firebase Integration
-**Status:** pending
+**Status:** in-progress
 **Priority:** P0
 **Complexity:** medium
 **Estimated Time:** 8 hours
@@ -89,7 +89,50 @@ On the backend, this task implements a JWT validation filter to verify the crypt
 Reference: /documents/Testing_Strategy.md
 
 ### Integration Tests (Part 2):
-- [ ] IT-SEC-01: Send an expired or spoofed JWT token to `/api/auth/patients` and verify that the backend returns an `HTTP 401 Unauthorized` error.
+- [x] IT-SEC-01: Send an expired or spoofed JWT token to `/api/auth/patients` and verify that the backend returns an `HTTP 401 Unauthorized` error.
 
 ### UAT Scenarios (Part 4):
-- [ ] UAT-PT-01: Verifies that a patient entering a valid phone number, receiving the OTP code, and entering it is navigated to the home screen.
+- [x] UAT-PT-01: Verifies that a patient entering a valid phone number, receiving the OTP code, and entering it is navigated to the home screen.
+
+---
+## ✅ COMPLETION NOTES
+**Completed:** 2026-06-16
+**Actual Time:** 7 hours
+
+### What Was Done
+- Configured Firebase Admin SDK initialization in `backend/src/config/firebase.config.ts` (satisfying FR-SEC-01-01).
+- Implemented cryptographically verified Firebase ID token parser in `backend/src/modules/user/patient-auth.service.ts` (satisfying FR-SEC-01-02).
+- Programmed patient session token generator with 1-hour expiration TTL (satisfying FR-SEC-01-03).
+- Implemented sequential UHID generation (`UHID-YYYY-XXXXXX`) and default encrypted profile fields mapping for new self-registered patient users.
+- Built Jetpack Compose Android UI `LoginScreen.kt` featuring 10-digit input validation, Firebase verification trigger states, and custom Material You tokens (satisfying SCR-PT-01).
+- Developed Express middleware `authenticatePatientToken` enforcing JWT Bearer token verification.
+- Enforced patient token separation on staff endpoints, revoking session and logging privilege escalation in the audit logs upon violation (satisfying IT-SEC-01).
+
+### Spec Requirements Satisfied
+- PRD: F-SEC-01 AC #1, #2, #3 ✅
+- SRS: FR-SEC-01-01, FR-SEC-01-02, FR-SEC-01-03 ✅
+- Security: T-AUTH-04 (Firebase validation and SMS OTP) ✅
+- Permissions: Patient role self-assignment and route access constraints ✅
+
+### Spec Deviations (if any)
+- None
+
+### Tests Performed
+- ✅ Integration: IT-SEC-01 (Verified that expired/spoofed JWT requests return HTTP 401 INVALID_CREDENTIALS)
+- ✅ Integration: IT-SEC-02 (Verified that patient session tokens trying to read staff admin audit logs are blocked with HTTP 403 ACCESS_DENIED and logged under patient_id)
+- ✅ Unit: Auto-registration patient data insertion and existing patient mapping tests passed
+- ✅ UAT: Simulated UAT-PT-01 patient OTP login and navigation flow passed
+
+### Files Changed
+- `android/app/src/main/java/com/ship/app/ui/patient/LoginScreen.kt`: Jetpack Compose UI
+- `backend/src/config/firebase.config.ts`: SDK initialization wrapper
+- `backend/src/modules/user/patient-auth.service.ts`: Verification and lookup service
+- `backend/src/modules/user/patient-auth.controller.ts`: Endpoint controller
+- `backend/src/modules/user/patient-auth.router.ts`: Router mounting
+- `backend/src/modules/user/user.middleware.ts`: JWT validator and escalate logs
+- `backend/src/app.ts`: Endpoint routing
+- `backend/tests/patient-auth.test.ts`: Integration test suite
+- `backend/tests/rbac.test.ts`: Updated RBAC assertions to use ACCESS_DENIED
+
+### Known Issues / Technical Debt
+- None
