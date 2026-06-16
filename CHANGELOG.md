@@ -10,12 +10,49 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 ### In Progress
-### Started: task-007 — Patient Triage and Vital Signs Recording
-**Started:** 2026-06-16 13:20
+
+---
+
+## [0.8.0] - 2026-06-16
+### Task: task-007 — Patient Triage and Vital Signs Recording
+**Status:** ✅ Completed
 **Priority:** P0
-**Document Refs:** PRD: F-OPD-05 | SRS: FR-OPD-05-01 | API: /v1/triage/vitals | Screens: SCR-NS-02, SCR-NS-03
-Beginning work on vital signs collection (blood pressure, heart rate, temperature, weight), numeric range validation, Vault Transit FLE encryption, role-based access restrictions, and integration tests.
-Plan: Described in implementation_plan.md, following Technical_Requirements.md.
+**Time Spent:** 5 hours (estimated: 6 hours)
+
+#### Spec Requirements Satisfied
+- PRD Feature: F-OPD-05 — Patient Vital Signs Recording (Triage)
+- SRS Requirements: FR-OPD-05-01, FR-OPD-05-02
+- API Endpoints implemented: [POST /v1/triage/vitals], [GET /v1/triage/vitals/:id], [GET /v1/triage/vitals/queue-token/:queueTokenId]
+- DB Tables affected: vitals, audit_logs
+- Screens implemented: SCR-NS-02, SCR-NS-03
+- Security controls: Vault Transit FLE (GCM application-layer encryption) for vital signs parameters, input range checks
+- Permissions enforced: Patient own read only, Nurse write/read, Doctor read, Admin read.
+- Tests written: IT-OPD-02, UAT-NS-01
+
+#### What Was Done
+- Coded strict range checks for vitals (BP regex format, heart rate 30-250 bpm, temperature 90.0-110.0°F, weight 1.0-500.0 kg).
+- Integrated Vault Transit engine to encrypt vitals fields at the application layer before saving to the DB.
+- Implemented role-based read validation, ensuring only authorized roles (Nurse, Doctor, Admin, Patient own) can retrieve decrypted vitals.
+- Created controller and router endpoints mapping POST and GET actions, and registered the vitals sub-router at `/v1/triage/vitals` in the main express app.
+
+#### Why These Changes
+- Streamlines the nurse triage process, protecting patient health indicators using Vault encryption while auto-populating patient vitals for doctors in the consultation panel.
+
+#### Technical Decisions Made
+- Converted vitals parameters (heart rate, temperature, weight) to base64 strings before transit KMS encryption, storing ciphertext in TEXT columns.
+
+#### Files Modified/Created
+- `backend/src/modules/patient/vitals.service.ts`
+- `backend/src/modules/patient/vitals.controller.ts`
+- `backend/src/modules/patient/vitals.router.ts`
+- `backend/src/app.ts`
+- `backend/tests/vitals.test.ts`
+
+#### Spec Deviations
+- None
+
+#### This Task Unblocks
+- task-008
 
 ---
 

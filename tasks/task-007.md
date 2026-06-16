@@ -1,5 +1,5 @@
 # Task 007: Patient Triage and Vital Signs Recording
-**Status:** pending
+**Status:** completed
 **Priority:** P0
 **Complexity:** low
 **Estimated Time:** 6 hours
@@ -82,3 +82,38 @@ The collected vital signs populate the database and are linked to the queue toke
 - `backend/src/modules/patient/vitals.controller.ts` — Create vitals endpoint
 - `backend/src/modules/patient/vitals.service.ts` — Implement vitals encryption & validation
 - `backend/src/modules/patient/vitals.router.ts` — Define triage routes
+
+---
+## ✅ COMPLETION NOTES
+**Completed:** 2026-06-16
+**Actual Time:** 5 hours
+
+### What Was Done
+- Programmed input range validations for vitals (BP regex check, Heart Rate, Temperature, and Weight boundaries) returning 400 Bad Request if invalid.
+- Programmed application-layer encryption (Vault Transit FLE) for restricted health fields before database persistence.
+- Enforced role-based access control protecting read access (Nurse, Doctor, Admin, and Patient own records allowed; other staff roles rejected).
+- Developed endpoints `/v1/triage/vitals`, `/v1/triage/vitals/:id`, and `/v1/triage/vitals/queue-token/:queueTokenId` linked to active queue tokens.
+
+### Spec Requirements Satisfied
+- PRD: F-OPD-05 AC #1-3 ✅
+- SRS: FR-OPD-05-01 ✅, FR-OPD-05-02 ✅
+- Security: T-OPD-03 (mitigated by Vault Transit GCM field encryption) ✅
+- Permissions: Patient own read only, Nurse write/read, Doctor read, Admin read.
+
+### Spec Deviations (if any)
+- None
+
+### Tests Performed
+- ✅ Integration: `tests/vitals.test.ts` — Passed (all 13 tests passed)
+
+### Files Changed
+- `backend/src/modules/patient/vitals.service.ts`
+- `backend/src/modules/patient/vitals.controller.ts`
+- `backend/src/modules/patient/vitals.router.ts`
+- `backend/src/app.ts`
+- `backend/tests/vitals.test.ts`
+- `tasks/tasks.json`
+- `CHANGELOG.md`
+
+### Known Issues / Technical Debt
+- None

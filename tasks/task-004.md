@@ -1,5 +1,5 @@
 # Task 004: Patient Authentication and Firebase Integration
-**Status:** in-progress
+**Status:** completed
 **Priority:** P0
 **Complexity:** medium
 **Estimated Time:** 8 hours

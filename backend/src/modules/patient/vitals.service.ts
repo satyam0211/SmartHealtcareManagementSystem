@@ -49,7 +49,7 @@ export async function saveVitals(
 
   // 2. Verify queue token exists and belongs to the patient
   const tokenResult = await dbQuery(
-    'SELECT id, patient_id FROM queue_tokens WHERE id = $1 AND deleted_at IS NULL',
+    'SELECT id, patient_id FROM queue_tokens WHERE id = $1',
     [queueTokenId]
   );
   if (tokenResult.rows.length === 0) {
@@ -63,7 +63,7 @@ export async function saveVitals(
 
   // 3. Check if vitals already recorded for this queue token
   const existingResult = await dbQuery(
-    'SELECT id FROM vitals WHERE queue_token_id = $1 AND deleted_at IS NULL',
+    'SELECT id FROM vitals WHERE queue_token_id = $1',
     [queueTokenId]
   );
   if (existingResult.rows.length > 0) {
@@ -156,7 +156,7 @@ export async function getVitalsById(
   ipAddress: string
 ): Promise<any> {
   const result = await dbQuery(
-    'SELECT * FROM vitals WHERE id = $1 AND deleted_at IS NULL',
+    'SELECT * FROM vitals WHERE id = $1',
     [vitalsId]
   );
   if (result.rows.length === 0) {
@@ -190,7 +190,7 @@ export async function getVitalsByQueueToken(
   ipAddress: string
 ): Promise<any> {
   const result = await dbQuery(
-    'SELECT * FROM vitals WHERE queue_token_id = $1 AND deleted_at IS NULL',
+    'SELECT * FROM vitals WHERE queue_token_id = $1',
     [queueTokenId]
   );
   if (result.rows.length === 0) {
